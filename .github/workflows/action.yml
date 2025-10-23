@@ -30,4 +30,4 @@ jobs:
           password: ${{ secrets.ftp_password }}
           dangerous-clean-slate: true
           local-dir: ./dist/
-          server-dir: ./github-action.smitbhalani.in/
+          server-dir: /github-action.smitbhalani.in/
