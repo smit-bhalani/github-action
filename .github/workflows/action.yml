@@ -1,0 +1,33 @@
+name: 🚀 Deploy website on push
+
+on:
+  push:
+    branches: main # Triggers only when you push to main
+
+jobs:
+  web-deploy:
+    name: 🎉 Deploy to cPanel via FTP
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+
+      - name: 🧰 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 📦 Install dependencies and build
+        run: |
+          npm ci
+          npm run build
+
+      - name: 📂 Upload build folder to cPanel
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.ftp_server }}
+          username: ${{ secrets.ftp_name }}
+          password: ${{ secrets.ftp_password }}
+          dangerous-clean-slate: true
+          local-dir: dist
+          server-dir: /public_html/
