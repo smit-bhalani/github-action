@@ -9,6 +9,12 @@ jobs:
     name: 🎉 Deploy to cPanel via FTP
     runs-on: ubuntu-latest
     steps:
+      - name: Convert GitHub context to JSON
+        id: github_json
+        run: |
+          echo '${{ toJson(github) }}' > github_context.json
+          cat github_context.json
+
       - name: 🚚 Get latest code
         uses: actions/checkout@v4
 
@@ -30,3 +36,38 @@ jobs:
           password: ${{ secrets.ftp_password }}
           dangerous-clean-slate: true
           local-dir: dist/
+
+  notify-on-failure:
+    # Run this job if ANY previous job failed
+    needs: [web-deploy]
+    if: always()
+    runs-on: ubuntu-latest
+        
+    steps:
+      - name: Send failure email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "🚨 GitHub Actions Failure: Deploy Portfolio"
+          to: smitbhalani.me@gmail.com
+          from: "GitHub Actions <${{ secrets.SMTP_USERNAME }}>"
+          body: |
+                    ❌ The GitHub Actions workflow **${{ github.workflow }}** has **failed**.
+
+                    🧩 Job: build-and-deploy  
+                    🧑 Actor: ${{ github.actor }}  
+                    📦 Repository: ${{ github.repository }}  
+                    🌿 Branch: ${{ github.ref_name }}  
+                    🔢 Commit: ${{ github.sha }}  
+                    🔗 Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        
+                    Please check the workflow logs for details.
+
+                    ${{ toJson(github) }}
+
+          attachments: github_context.json
+        
